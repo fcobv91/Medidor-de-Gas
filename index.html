@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Provisión · Medidor de Gas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EBEEEB; --card:#FFFFFF; --ink:#13201B; --muted:#5A675F;
+    --border:#D6DBD7; --border-strong:#BCC4BE;
+    --connect:#2B6E8E; --connect-d:#235a74;
+    --go:#15876A; --go-d:#0f6e56;
+    --danger:#B23B2E; --amber:#C9821A;
+    --led-idle:#9AA39E;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --disp:"Space Grotesk",system-ui,sans-serif;
+    --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0E1714; --card:#16221E; --ink:#E7EDE9; --muted:#93A39A;
+      --border:#243029; --border-strong:#33433A; --connect:#4FA3C7; --go:#27B58E; }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--body);
+    line-height:1.5;-webkit-font-smoothing:antialiased;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);}
+  .wrap{max-width:520px;margin:0 auto;padding:18px 16px 40px}
+  header{display:flex;align-items:center;gap:12px;padding:10px 2px 18px}
+  .mark{width:42px;height:42px;border-radius:11px;background:var(--ink);color:var(--bg);
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .mark svg{width:22px;height:22px}
+  h1{font-family:var(--disp);font-weight:600;font-size:21px;margin:0;letter-spacing:-.01em}
+  .sub{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 8px 2px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
+  .statusrow{display:flex;align-items:center;gap:12px}
+  .led{width:14px;height:14px;border-radius:50%;background:var(--led-idle);flex:0 0 auto;transition:background .2s}
+  .led.scan{background:var(--amber);animation:pulse 1s infinite}
+  .led.ok{background:var(--go)} .led.err{background:var(--danger)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .stxt{font-weight:500} .sdev{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:1px}
+  button{font-family:var(--disp);font-weight:600;cursor:pointer;border:none;border-radius:13px;
+    width:100%;min-height:56px;font-size:17px;color:#fff;transition:filter .15s,transform .05s}
+  button:active{transform:scale(.99)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .b-connect{background:var(--connect)} .b-connect:hover:not(:disabled){filter:brightness(1.06)}
+  .b-go{background:var(--go)} .b-go:hover:not(:disabled){filter:brightness(1.06)}
+  .b-ghost{background:transparent;color:var(--ink);border:1px solid var(--border-strong);min-height:50px;font-size:15px}
+  .b-loc{background:transparent;color:var(--connect);border:1px solid var(--connect);min-height:52px;font-size:15px;
+    display:flex;align-items:center;justify-content:center;gap:8px}
+  .b-loc svg{width:18px;height:18px}
+  label{display:block;font-size:13px;color:var(--muted);margin:14px 0 6px;font-weight:500}
+  label:first-child{margin-top:0}
+  .req{color:var(--danger)}
+  input{width:100%;height:50px;border:1px solid var(--border);border-radius:11px;background:var(--bg);
+    color:var(--ink);font-size:16px;padding:0 13px;font-family:var(--body)}
+  input:focus{outline:none;border-color:var(--connect);box-shadow:0 0 0 3px color-mix(in srgb,var(--connect) 22%,transparent)}
+  .coords{font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
+  .preview{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px dashed var(--border-strong);
+    border-radius:11px;padding:11px 12px;margin:6px 0 2px;word-break:break-all;color:var(--ink)}
+  .preview .sep{color:var(--connect);font-weight:500}
+  .hidden{display:none}
+  .banner{border-radius:13px;padding:13px 14px;font-size:14px;margin-bottom:16px;line-height:1.45}
+  .banner.warn{background:color-mix(in srgb,var(--amber) 16%,var(--card));border:1px solid color-mix(in srgb,var(--amber) 45%,transparent);color:var(--ink)}
+  .banner.err{background:color-mix(in srgb,var(--danger) 13%,var(--card));border:1px solid color-mix(in srgb,var(--danger) 45%,transparent);color:var(--ink)}
+  .banner.ok{background:color-mix(in srgb,var(--go) 14%,var(--card));border:1px solid color-mix(in srgb,var(--go) 45%,transparent);color:var(--ink)}
+  footer{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--muted);text-align:center;
+    margin-top:8px;line-height:1.7}
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;
+    border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:7px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 7l10 10-5 5V2l5 5L7 17"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Medidor de Gas</h1>
+      <div class="sub">Provisión de campo</div>
+    </div>
+  </header>
+
+  <div id="bnUnsupported" class="banner warn hidden"></div>
+  <div id="bnMsg" class="banner hidden"></div>
+
+  <div class="card">
+    <div class="statusrow" style="margin-bottom:14px">
+      <div id="led" class="led" aria-hidden="true"></div>
+      <div>
+        <div id="stxt" class="stxt">Sin conectar</div>
+        <div id="sdev" class="sdev">Listo para buscar</div>
+      </div>
+    </div>
+    <button id="btnConnect" class="b-connect">Conectar medidor</button>
+    <button id="btnDisconnect" class="b-ghost hidden" style="margin-top:10px">Desconectar</button>
+  </div>
+
+  <p id="formEyebrow" class="eyebrow hidden">Configuración</p>
+  <div id="form" class="card hidden">
+    <label>Red Wi-Fi (SSID)</label>
+    <input id="ssid" type="text" autocomplete="off" autocapitalize="none" placeholder="Nombre de la red">
+
+    <label>Contraseña</label>
+    <input id="pass" type="password" autocomplete="off" placeholder="Contraseña Wi-Fi">
+
+    <label>Nombre completo <span class="req">*</span></label>
+    <input id="nombre" type="text" autocomplete="off" placeholder="Cliente">
+
+    <label>ID / contrato (opcional)</label>
+    <input id="cid" type="text" autocomplete="off" placeholder="CTR-00482">
+
+    <label>Ubicación de instalación</label>
+    <button id="btnLoc" class="b-loc" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+      Obtener ubicación
+    </button>
+    <div id="coords" class="coords">Lat: — · Lon: —</div>
+
+    <label style="margin-top:18px">Se enviará al medidor</label>
+    <div id="preview" class="preview"></div>
+
+    <button id="btnSend" class="b-go" style="margin-top:16px" disabled>Enviar y configurar</button>
+  </div>
+
+  <footer>
+    DISPOSITIVO: MedidorGas_Setup<br>
+    SERVICIO NUS · RX 6E400002-…-CCA9E
+  </footer>
+
+</div>
+
+<script>
+const NUS   = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+const RX    = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+const TX    = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+
+const $ = id => document.getElementById(id);
+const led=$("led"), stxt=$("stxt"), sdev=$("sdev");
+const btnConnect=$("btnConnect"), btnDisconnect=$("btnDisconnect");
+const form=$("form"), formEyebrow=$("formEyebrow");
+const btnSend=$("btnSend"), btnLoc=$("btnLoc"), coords=$("coords"), preview=$("preview");
+const bnMsg=$("bnMsg"), bnUnsupported=$("bnUnsupported");
+
+let device=null, server=null, rxChar=null, lat="0", lon="0";
+
+function setStatus(state, main, dev){
+  led.className = "led" + (state?(" "+state):"");
+  stxt.textContent = main;
+  if(dev!==undefined) sdev.textContent = dev;
+}
+function msg(kind, html){
+  if(!html){ bnMsg.className="banner hidden"; return; }
+  bnMsg.className = "banner "+kind; bnMsg.innerHTML = html;
+}
+function esc(s){ return s.replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+function refreshPreview(){
+  const ssid=$("ssid").value, pass=$("pass").value, nombre=$("nombre").value, cid=$("cid").value;
+  const mask = pass ? "•".repeat(Math.min(pass.length,8)) : "";
+  const sep='<span class="sep">|</span>';
+  preview.innerHTML = [esc(ssid), mask, esc(nombre), esc(cid), lat, lon].join(sep);
+}
+function refreshSend(){
+  btnSend.disabled = !(server && server.connected && $("nombre").value.trim().length>0);
+}
+["ssid","pass","nombre","cid"].forEach(id=>$(id).addEventListener("input",()=>{refreshPreview();refreshSend();}));
+
+function checkSupport(){
+  if(!window.isSecureContext){
+    bnUnsupported.className="banner warn";
+    bnUnsupported.innerHTML="Esta página debe abrirse por <b>HTTPS</b> (o localhost) para usar Bluetooth. Súbela a un hosting con HTTPS, por ejemplo GitHub Pages.";
+    btnConnect.disabled=true; return false;
+  }
+  if(!navigator.bluetooth){
+    bnUnsupported.className="banner warn";
+    bnUnsupported.innerHTML="Este navegador no soporta Web Bluetooth. Ábrela en <b>Chrome para Android</b> (o Chrome/Edge de escritorio).";
+    btnConnect.disabled=true; return false;
+  }
+  return true;
+}
+
+async function connect(){
+  msg();
+  try{
+    setStatus("scan","Buscando…","Elige MedidorGas_Setup en la lista");
+    btnConnect.innerHTML='<span class="spin"></span>Buscando…'; btnConnect.disabled=true;
+    device = await navigator.bluetooth.requestDevice({
+      filters:[{namePrefix:"MedidorGas_Setup"}],
+      optionalServices:[NUS]
+    });
+    device.addEventListener("gattserverdisconnected", onDisconnected);
+    setStatus("scan","Conectando…", device.name||"");
+    server = await device.gatt.connect();
+    const svc = await server.getPrimaryService(NUS);
+    rxChar = await svc.getCharacteristic(RX);
+    try{
+      const txChar = await svc.getCharacteristic(TX);
+      await txChar.startNotifications();
+      txChar.addEventListener("characteristicvaluechanged", onTx);
+    }catch(e){ /* TX opcional */ }
+
+    setStatus("ok","Conectado", device.name||"MedidorGas_Setup");
+    btnConnect.classList.add("hidden");
+    btnDisconnect.classList.remove("hidden");
+    form.classList.remove("hidden"); formEyebrow.classList.remove("hidden");
+    refreshPreview(); refreshSend();
+  }catch(err){
+    btnConnect.innerHTML="Conectar medidor"; btnConnect.disabled=false;
+    if(err && err.name==="NotFoundError"){ setStatus("","Sin conectar","Búsqueda cancelada"); }
+    else{ setStatus("err","Error de conexión","Reintenta"); msg("err","No se pudo conectar. Verifica que el medidor esté en modo provisión (anunciando) y cerca. Detalle: "+esc(String(err&&err.message||err))); }
+  }
+}
+
+function onDisconnected(){
+  setStatus("","Sin conectar","El medidor se desconectó");
+  form.classList.add("hidden"); formEyebrow.classList.add("hidden");
+  btnDisconnect.classList.add("hidden");
+  btnConnect.classList.remove("hidden"); btnConnect.innerHTML="Conectar medidor"; btnConnect.disabled=false;
+  rxChar=null; server=null;
+}
+function disconnect(){ if(device&&device.gatt.connected) device.gatt.disconnect(); else onDisconnected(); }
+
+function getLocation(){
+  if(!navigator.geolocation){ msg("warn","Este navegador no expone GPS."); return; }
+  btnLoc.disabled=true; coords.textContent="Obteniendo ubicación…";
+  navigator.geolocation.getCurrentPosition(
+    p=>{ lat=p.coords.latitude.toFixed(6); lon=p.coords.longitude.toFixed(6);
+         coords.textContent=`Lat: ${lat} · Lon: ${lon}`; btnLoc.disabled=false; refreshPreview(); msg(); },
+    e=>{ btnLoc.disabled=false; coords.textContent="Lat: — · Lon: —";
+         msg("warn","No se obtuvo la ubicación. Activa el GPS y concede el permiso, o continúa sin ella."); },
+    {enableHighAccuracy:true, timeout:12000, maximumAge:0}
+  );
+}
+
+async function send(){
+  if(!rxChar) return;
+  const ssid=$("ssid").value, pass=$("pass").value, nombre=$("nombre").value.trim(), cid=$("cid").value.trim();
+  const payload = `${ssid}|${pass}|${nombre}|${cid}|${lat}|${lon}\n`;
+  try{
+    btnSend.disabled=true; btnSend.innerHTML='<span class="spin"></span>Enviando…';
+    await rxChar.writeValue(new TextEncoder().encode(payload));
+    btnSend.innerHTML="Enviar y configurar"; refreshSend();
+    msg("ok","Configuración enviada. Espera la confirmación del medidor.");
+    setStatus("ok","Enviado", device.name||"");
+  }catch(err){
+    btnSend.innerHTML="Enviar y configurar"; refreshSend();
+    msg("err","No se pudo enviar. Sigue conectado e inténtalo de nuevo. Detalle: "+esc(String(err&&err.message||err)));
+  }
+}
+
+function onTx(ev){
+  const txt=new TextDecoder().decode(ev.target.value);
+  if(/ok/i.test(txt)){
+    msg("ok","Medidor configurado correctamente. Ya puedes desconectar.");
+    setStatus("ok","Configurado ✔", device.name||"");
+  }
+}
+
+btnConnect.addEventListener("click", connect);
+btnDisconnect.addEventListener("click", disconnect);
+btnLoc.addEventListener("click", getLocation);
+btnSend.addEventListener("click", send);
+
+checkSupport();
+refreshPreview();
+</script>
+</body>
+</html>
