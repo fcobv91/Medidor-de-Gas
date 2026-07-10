@@ -70,6 +70,7 @@
   .banner.ok{background:color-mix(in srgb,var(--go) 14%,var(--card));border:1px solid color-mix(in srgb,var(--go) 45%,transparent);color:var(--ink)}
   footer{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--muted);text-align:center;
     margin-top:8px;line-height:1.7}
+  footer .credito{display:block;margin-top:10px;font-size:11px;letter-spacing:.03em;color:var(--muted)}
   .spin{display:inline-block;width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;
     border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:7px}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -135,6 +136,7 @@
   <footer>
     DISPOSITIVO: MedidorGas_Setup<br>
     SERVICIO NUS · RX 6E400002-…-CCA9E
+    <span class="credito">Desarrollado por Distribuciones DIMOBA</span>
   </footer>
 
 </div>
@@ -250,7 +252,7 @@ async function send(){
     btnSend.disabled=true; btnSend.innerHTML='<span class="spin"></span>Enviando…';
     await rxChar.writeValue(new TextEncoder().encode(payload));
     btnSend.innerHTML="Enviar y configurar"; refreshSend();
-    msg("ok","Configuración enviada. Espera la confirmación del medidor.");
+    msg("ok","Configuración recibida por el medidor. El dispositivo se reiniciará y verificará la red Wi-Fi — esto puede tardar hasta 2 minutos. Si el medidor <b>vuelve a aparecer en modo configuración</b> (mismo nombre en la lista de Bluetooth), significa que no pudo conectarse a esa red: revisa el SSID/contraseña y vuelve a intentar aquí mismo, sin necesidad de resetear el equipo.");
     setStatus("ok","Enviado", device.name||"");
   }catch(err){
     btnSend.innerHTML="Enviar y configurar"; refreshSend();
